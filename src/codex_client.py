@@ -21,7 +21,16 @@ def find_codex():
             matches = sorted(npm.glob('@openai/codex-win32-*/vendor/*/codex/codex.exe'))
             if matches:
                 return [str(matches[-1])]
-    raise ClientError('Codex CLI unavailable. Install official Codex and add codex.exe to PATH.')
+    if os.name == 'nt':
+        from pathlib import Path
+        # Explorer/startup may have an older PATH than the Codex app session.
+        local = os.environ.get('LOCALAPPDATA')
+        if local:
+            bundled = Path(local) / 'OpenAI/Codex/bin'
+            matches = [p for p in bundled.glob('*/codex.exe') if p.is_file()]
+            if matches:
+                return [str(max(matches, key=lambda p: p.stat().st_mtime))]
+    raise ClientError('Codex CLI not found. Install Codex CLI or the Codex desktop app; retrying.')
 
 class CodexClient:
     def __init__(self, command=None):

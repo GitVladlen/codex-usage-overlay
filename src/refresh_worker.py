@@ -84,8 +84,10 @@ class RefreshWorker(QThread):
                     elif 'id' in msg and 'method' in msg:
                         # This client never authorizes tool executions or credential requests.
                         raise ClientError('Unexpected server request; connection closed')
-            except (ClientError, OSError):
-                self.failed.emit('Codex unavailable. Check CLI installation, login, and network; retrying.')
+            except ClientError as error:
+                self.failed.emit(str(error))
+            except OSError:
+                self.failed.emit('Cannot communicate with Codex CLI; retrying.')
             finally:
                 client.close()
             self.stop_event.wait(retry)
