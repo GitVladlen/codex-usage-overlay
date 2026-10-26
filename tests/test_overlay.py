@@ -42,3 +42,26 @@ class CompactViewTests(unittest.TestCase):
    dialog.fields['compact_mode'].setChecked(False); dialog.commit()
    self.assertFalse(self.overlay.config.compact_mode)
   finally: tray.hide()
+
+ def test_unlock_preserves_geometry_in_both_views(self):
+  from PySide6.QtCore import Qt
+  self.overlay.timer.stop()
+  self.overlay.update_usage({300:Window(17,300,None),10080:Window(3,10080,None)},time.time())
+  for compact in (True,False):
+   for background in (True,False):
+    with self.subTest(compact=compact,background=background):
+     self.overlay.config.compact_mode=compact
+     self.overlay.config.background=background
+     self.overlay.unlocked=False; self.overlay.apply(); self.overlay.show()
+     self.app.processEvents(); self.overlay.move(100,100)
+     size=self.overlay.size(); position=self.overlay.pos(); text=self.overlay.label.text()
+     self.overlay.unlocked=True; self.overlay.apply(); self.overlay.show(); self.app.processEvents()
+     self.assertEqual(self.overlay.size(),size)
+     self.assertEqual(self.overlay.pos(),position)
+     self.assertEqual(self.overlay.label.text(),text)
+     self.assertEqual(self.overlay.cursor().shape(),Qt.SizeAllCursor)
+     self.assertIn('border:1px solid #65bfff',self.overlay.label.styleSheet())
+     self.overlay.unlocked=False; self.overlay.apply(); self.overlay.show(); self.app.processEvents()
+     self.assertEqual(self.overlay.size(),size)
+     self.assertEqual(self.overlay.pos(),position)
+     self.assertEqual(self.overlay.cursor().shape(),Qt.ArrowCursor)

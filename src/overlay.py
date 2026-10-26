@@ -21,8 +21,10 @@ class Overlay(QWidget):
     def apply(self):
         c=self.config
         self.setWindowOpacity(c.opacity/100)
-        bg='rgba(20,20,20,160)' if c.background else 'transparent'
-        self.label.setStyleSheet(f'color:{c.font_color}; font-family:Segoe UI; font-size:{c.font_size}pt; background:{bg}; border-radius:5px; padding:3px;')
+        bg='rgba(35,90,130,70)' if self.unlocked else ('rgba(20,20,20,160)' if c.background else 'transparent')
+        border='#65bfff' if self.unlocked else 'transparent'
+        self.setCursor(Qt.SizeAllCursor if self.unlocked else Qt.ArrowCursor)
+        self.label.setStyleSheet(f'color:{c.font_color}; font-family:Segoe UI; font-size:{c.font_size}pt; background:{bg}; border:1px solid {border}; border-radius:5px; padding:3px;')
         self.setWindowFlag(Qt.WindowTransparentForInput,c.click_through and not self.unlocked)
         self.render()
         if self.isVisible(): self.show()
@@ -37,7 +39,7 @@ class Overlay(QWidget):
         self.windows,self.last,self.error=windows,stamp,''; self.render()
     def fail(self,error): self.error=error; self.render()
     def render(self):
-        now=time.time(); lines=['CODEX'+('  ·  MOVE' if self.unlocked else '')]
+        now=time.time(); lines=['CODEX']
         for minutes,title in [(300,'5h'),(10080,'Week')]:
             if minutes==10080 and not self.config.show_weekly: continue
             w=self.windows.get(minutes)
@@ -64,7 +66,6 @@ class Overlay(QWidget):
                     parts.append(f'{title} {window.remaining}%' if window else f'{title} —%')
                 if stale: parts.append('⚠')
                 text=' · '.join(parts)
-            if self.unlocked: text+=' · MOVE'
         else:
             text=full_text
         self.label.setToolTip(full_text)

@@ -20,3 +20,8 @@ Remaining manual checks: physical click-through over other applications, tray in
 
 - 25 automated tests passed, including compact defaults and legacy-settings migration, stale/unavailable text, weekly visibility, tray/settings switching, and preference persistence.
 - GUI smoke received real usage and compact screenshot was visually inspected.
+
+## Move mode appearance
+
+- 26 automated tests passed. Lock/unlock preserves text, widget size and position in compact/full modes, with optional background on and off. Move cursor and blue frame verified.
+- Unlocked appearance screenshot inspected; MOVE text removed from both views.
