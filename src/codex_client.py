@@ -40,11 +40,15 @@ class CodexClient:
         self.reader = None
         self.counter = 0
     def start(self):
+        command = self.command or find_codex()
+        self._launch(command + ['-c','analytics.enabled=false','-c','feedback.enabled=false','-c','otel.exporter="none"','app-server','--listen','stdio://'])
+    def _keep_message(self, message):
+        return 'id' in message or message.get('method') == 'account/rateLimits/updated'
+    def _launch(self, arguments, env=None):
         self.close()
         self.events = Queue(maxsize=256)
-        command = self.command or find_codex()
         try:
-            self.process = subprocess.Popen(command + ['-c','analytics.enabled=false','-c','feedback.enabled=false','-c','otel.exporter="none"','app-server','--listen','stdio://'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            self.process = subprocess.Popen(arguments, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         except OSError:
             raise ClientError('Cannot start official Codex CLI') from None
         proc, events = self.process, self.events
@@ -61,7 +65,7 @@ class CodexClient:
                     if not isinstance(message, dict):
                         break
                     # Ignore unrelated notifications; never retain account metadata.
-                    if 'id' in message or message.get('method') == 'account/rateLimits/updated':
+                    if self._keep_message(message):
                         events.put(message, timeout=1)
             except Exception:
                 pass

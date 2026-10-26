@@ -10,7 +10,8 @@ from src.settings import SettingsDialog
 class CompactViewTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls): cls.app=QApplication.instance() or QApplication([])
- def setUp(self): self.overlay=Overlay(Config(),lambda:None)
+ def setUp(self):
+  self.overlay=Overlay(Config(),lambda:None); self.overlay.set_activity(True,False)
  def tearDown(self): self.overlay.timer.stop(); self.overlay.hide(); self.overlay.deleteLater()
  def test_default_and_legacy_settings(self):
   self.assertTrue(Config().compact_mode)
@@ -22,7 +23,7 @@ class CompactViewTests(unittest.TestCase):
   self.overlay.fail('offline')
   self.assertEqual(self.overlay.label.text(),'CDX · 5h 83% · W 97% · ⚠')
  def test_unavailable_and_weekly_hidden(self):
-  self.assertEqual(self.overlay.label.text(),'CDX · недоступно')
+  self.assertEqual(self.overlay.label.text(),'CDX · підключення…')
   self.overlay.config.show_weekly=False
   self.overlay.update_usage({300:Window(17,300,None)},time.time())
   self.assertEqual(self.overlay.label.text(),'CDX · 5h 83%')
@@ -37,7 +38,7 @@ class CompactViewTests(unittest.TestCase):
    self.assertIn('CODEX',self.overlay.label.text())
    self.assertIn('No usage data',self.overlay.label.text())
    tray.compact.setChecked(True)
-   self.assertEqual(self.overlay.label.text(),'CDX · недоступно')
+   self.assertEqual(self.overlay.label.text(),'CDX · підключення…')
    dialog=SettingsDialog(self.overlay.config,commit)
    dialog.fields['compact_mode'].setChecked(False); dialog.commit()
    self.assertFalse(self.overlay.config.compact_mode)
@@ -65,3 +66,55 @@ class CompactViewTests(unittest.TestCase):
      self.assertEqual(self.overlay.size(),size)
      self.assertEqual(self.overlay.pos(),position)
      self.assertEqual(self.overlay.cursor().shape(),Qt.ArrowCursor)
+
+ def test_activity_rows(self):
+  self.overlay.update_usage({300:Window(17,300,None),10080:Window(3,10080,None)},time.time())
+  self.overlay.set_activity(True,True)
+  self.assertIn('CDX',self.overlay.label.text()); self.assertIn('CLD · підключення…',self.overlay.label.text())
+  self.overlay.set_activity(False,True)
+  self.assertEqual(self.overlay.label.text(),'CLD · підключення…')
+  self.overlay.set_activity(False,False)
+  self.assertEqual(self.overlay.label.text(),'Неактивно')
+  self.overlay.update_usage({300:Window(18,300,None)},time.time())
+  self.assertEqual(self.overlay.label.text(),'Неактивно')
+  self.overlay.set_activity(True,False)
+  self.assertIn('CDX',self.overlay.label.text()); self.assertNotIn('CLD',self.overlay.label.text())
+ def test_activity_full_view_and_detection_failure(self):
+  self.overlay.config.compact_mode=False
+  self.overlay.set_activity(False,True)
+  self.assertIn('CLAUDE',self.overlay.label.text()); self.assertNotIn('CODEX',self.overlay.label.text())
+  self.overlay.set_activity(False,False); self.overlay.fail_activity()
+  self.assertIn('Стан застосунків недоступний',self.overlay.label.text())
+  self.assertNotIn('Неактивно',self.overlay.label.text())
+  self.overlay.set_activity(False,False)
+  self.assertEqual(self.overlay.label.text(),'Неактивно')
+
+ def test_claude_live_and_independent_errors(self):
+  self.overlay.set_activity(True,True)
+  self.overlay.update_claude_usage({300:Window(0,300,None),10080:Window(1,10080,None)},time.time())
+  self.assertIn('CLD · 5h 100% · W 99%',self.overlay.label.text())
+  self.overlay.fail('Codex offline')
+  claude_row=self.overlay.label.text().splitlines()[-1]
+  self.assertNotIn('⚠',claude_row)
+  self.overlay.fail_claude('Claude offline')
+  self.assertIn('CLD · 5h 100% · W 99% · ⚠',self.overlay.label.text())
+  self.overlay.config.compact_mode=False;self.overlay.render()
+  self.assertIn('CLAUDE',self.overlay.label.text());self.assertIn('Updated',self.overlay.label.text())
+
+ def test_connecting_is_distinct_from_failed(self):
+  self.overlay.set_activity(False,True)
+  self.assertEqual(self.overlay.label.text(),'CLD · підключення…')
+  self.overlay.fail_claude('Claude could not fetch usage; retrying.')
+  self.assertEqual(self.overlay.label.text(),'CLD · дані недоступні')
+ def test_connection_status_reports_safe_error(self):
+  from unittest.mock import patch
+  class Worker:
+   def refresh(self):pass
+  tray=Tray(self.overlay,Worker(),self.overlay.config,lambda c:None)
+  try:
+   self.overlay.set_activity(False,True)
+   self.overlay.fail_claude('Claude could not fetch usage; retrying.')
+   with patch('src.tray.QMessageBox.information') as show:
+    tray.connection_status()
+    self.assertIn('Claude could not fetch usage',show.call_args.args[2])
+  finally:tray.hide()

@@ -12,3 +12,6 @@ smoke-overlay.png
 auth.json
 settings.json
 *.log
+
+# External native CLI dependencies
+tools/

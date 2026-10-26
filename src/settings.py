@@ -8,6 +8,8 @@ class SettingsDialog(QDialog):
         form=QFormLayout(self); self.fields={}
         for key,label,lo,hi in [('refresh_interval','Refresh interval (seconds)',5,3600),('font_size','Font size',8,36),('opacity','Opacity (%)',10,100)]:
             widget=QSpinBox(); widget.setRange(lo,hi); widget.setValue(getattr(config,key)); form.addRow(label,widget); self.fields[key]=widget
+        cli=QLineEdit(config.claude_cli_path); cli.setPlaceholderText('Auto-detect, or full path to official claude.exe')
+        form.addRow('Claude CLI executable',cli); self.fields['claude_cli_path']=cli
         color=QLineEdit(config.font_color); form.addRow('Font color (#RRGGBB)',color); self.fields['font_color']=color
         monitor=QComboBox()
         for screen in QApplication.screens(): monitor.addItem(screen.name())

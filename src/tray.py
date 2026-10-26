@@ -11,6 +11,7 @@ class Tray(QSystemTrayIcon):
         self.setToolTip('Codex Usage Overlay'); menu=QMenu()
         menu.addAction('Show / Hide Overlay',lambda:overlay.setVisible(not overlay.isVisible()))
         menu.addAction('Refresh Now',worker.refresh)
+        menu.addAction('Connection Status',self.connection_status)
         self.lock=menu.addAction('Unlock Position'); self.lock.setCheckable(True); self.lock.toggled.connect(self.unlock)
         self.click=menu.addAction('Enable Click-through'); self.click.setCheckable(True); self.click.setChecked(config.click_through); self.click.toggled.connect(self.clickthrough)
         self.compact=menu.addAction('Compact View'); self.compact.setCheckable(True); self.compact.setChecked(config.compact_mode); self.compact.toggled.connect(self.compact_view)
@@ -18,6 +19,17 @@ class Tray(QSystemTrayIcon):
         self.start=menu.addAction('Start with Windows'); self.start.setCheckable(True); self.start.setChecked(config.start_with_windows); self.start.toggled.connect(self.startup)
         menu.addSeparator(); menu.addAction('Exit',QApplication.instance().quit)
         self.menu=menu; self.setContextMenu(menu); self.show()
+    def connection_status(self):
+        o=self.overlay
+        lines=[]
+        for title,active,windows,error in [('Codex',o.codex_active,o.windows,o.error),
+                ('Claude',o.claude_active,o.claude_windows,o.claude_error)]:
+            if not active: status='Desktop window is closed; row hidden.'
+            elif error: status=error
+            elif windows: status='Connected. Usage data received.'
+            else: status='Waiting for usage data.'
+            lines.append(title+': '+status)
+        QMessageBox.information(None,'Connection Status','\n\n'.join(lines))
     def unlock(self,value):
         visible=self.overlay.isVisible(); self.overlay.unlocked=value; self.overlay.apply(); self.overlay.setVisible(visible)
     def clickthrough(self,value):

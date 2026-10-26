@@ -6,6 +6,7 @@ import re
 
 @dataclass
 class Config:
+    claude_cli_path: str = ''
     compact_mode: bool = True
     refresh_interval: int = 30
     x: int | None = None
@@ -36,6 +37,7 @@ def validate(data):
         defaults[key]=max(lo,min(hi,defaults[key]))
     if not re.fullmatch(r'#[0-9a-fA-F]{6}', defaults['font_color']): defaults['font_color']='#eeeeee'
     defaults['monitor']=defaults['monitor'][:256]
+    defaults['claude_cli_path']=defaults['claude_cli_path'][:4096]
     return Config(**defaults)
 
 def load(path=None):
