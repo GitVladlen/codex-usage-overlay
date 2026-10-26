@@ -23,6 +23,7 @@ def main():
     def commit(new):
         set_startup(new.start_with_windows); save(new)
         overlay.config=new; worker.interval=new.refresh_interval; tray.config=new
+        tray.compact.blockSignals(True); tray.compact.setChecked(new.compact_mode); tray.compact.blockSignals(False)
         tray.click.blockSignals(True); tray.click.setChecked(new.click_through); tray.click.blockSignals(False)
         tray.start.blockSignals(True); tray.start.setChecked(new.start_with_windows); tray.start.blockSignals(False)
         visible=overlay.isVisible(); overlay.apply(); overlay.place(); overlay.setVisible(visible)

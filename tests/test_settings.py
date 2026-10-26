@@ -4,7 +4,7 @@ from src.config import Config,load,save,validate
 class SettingsTests(unittest.TestCase):
  def test_roundtrip(self):
   with tempfile.TemporaryDirectory() as d:
-   p=Path(d)/'settings.json'; c=Config(x=-500,monitor='Display 2'); save(c,p); self.assertEqual(load(p),c)
+   p=Path(d)/'settings.json'; c=Config(x=-500,monitor='Display 2',compact_mode=False); save(c,p); self.assertEqual(load(p),c)
  def test_corrupt(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d)/'settings.json'; p.write_text('broken'); self.assertEqual(load(p),Config())

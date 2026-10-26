@@ -52,7 +52,23 @@ class Overlay(QWidget):
         stale=bool(self.error) or bool(self.last and now-self.last>max(65,self.config.refresh_interval*2+5))
         lines.append(('STALE · ' if stale and self.last else '') + ('Updated '+datetime.fromtimestamp(self.last).strftime('%H:%M:%S') if self.last else 'No usage data'))
         if self.error: lines.append('⚠ '+self.error)
-        self.label.setText('\n'.join(lines)); self.adjustSize()
+        full_text='\n'.join(lines)
+        if self.config.compact_mode:
+            if not self.windows:
+                text='CDX · недоступно'
+            else:
+                parts=['CDX']
+                for minutes,title in [(300,'5h'),(10080,'W')]:
+                    if minutes==10080 and not self.config.show_weekly: continue
+                    window=self.windows.get(minutes)
+                    parts.append(f'{title} {window.remaining}%' if window else f'{title} —%')
+                if stale: parts.append('⚠')
+                text=' · '.join(parts)
+            if self.unlocked: text+=' · MOVE'
+        else:
+            text=full_text
+        self.label.setToolTip(full_text)
+        self.label.setText(text); self.adjustSize()
     def mousePressEvent(self,event):
         if self.unlocked and event.button()==Qt.LeftButton: self.drag=event.globalPosition().toPoint()-self.pos()
     def mouseMoveEvent(self,event):

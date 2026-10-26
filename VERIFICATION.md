@@ -15,3 +15,8 @@ Remaining manual checks: physical click-through over other applications, tray in
 
 - 21 automated tests passed, including discovery with no Codex executable on PATH.
 - GUI smoke with PATH restricted to Windows System32 successfully retrieved real usage through the installed native CLI fallback.
+
+## Compact view
+
+- 25 automated tests passed, including compact defaults and legacy-settings migration, stale/unavailable text, weekly visibility, tray/settings switching, and preference persistence.
+- GUI smoke received real usage and compact screenshot was visually inspected.

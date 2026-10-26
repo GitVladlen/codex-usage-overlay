@@ -12,7 +12,7 @@ class SettingsDialog(QDialog):
         monitor=QComboBox()
         for screen in QApplication.screens(): monitor.addItem(screen.name())
         monitor.setCurrentText(config.monitor or QApplication.primaryScreen().name()); self.fields['monitor']=monitor; form.addRow('Monitor',monitor)
-        for key,label in [('click_through','Click-through'),('background','Background panel'),('show_reset_times','Show reset times'),('show_weekly','Show weekly usage'),('progress_bars','Progress bars'),('start_with_windows','Start with Windows')]:
+        for key,label in [('compact_mode','Compact view (disable for full view)'),('click_through','Click-through'),('background','Background panel'),('show_reset_times','Show reset times'),('show_weekly','Show weekly usage'),('progress_bars','Progress bars'),('start_with_windows','Start with Windows')]:
             widget=QCheckBox(); widget.setChecked(getattr(config,key)); self.fields[key]=widget; form.addRow(label,widget)
         buttons=QDialogButtonBox(QDialogButtonBox.Save|QDialogButtonBox.Cancel); buttons.accepted.connect(self.commit); buttons.rejected.connect(self.reject); form.addRow(buttons)
     def commit(self):

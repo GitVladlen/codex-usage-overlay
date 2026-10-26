@@ -13,6 +13,7 @@ class Tray(QSystemTrayIcon):
         menu.addAction('Refresh Now',worker.refresh)
         self.lock=menu.addAction('Unlock Position'); self.lock.setCheckable(True); self.lock.toggled.connect(self.unlock)
         self.click=menu.addAction('Enable Click-through'); self.click.setCheckable(True); self.click.setChecked(config.click_through); self.click.toggled.connect(self.clickthrough)
+        self.compact=menu.addAction('Compact View'); self.compact.setCheckable(True); self.compact.setChecked(config.compact_mode); self.compact.toggled.connect(self.compact_view)
         menu.addAction('Overlay Settings',self.settings)
         self.start=menu.addAction('Start with Windows'); self.start.setCheckable(True); self.start.setChecked(config.start_with_windows); self.start.toggled.connect(self.startup)
         menu.addSeparator(); menu.addAction('Exit',QApplication.instance().quit)
@@ -21,6 +22,10 @@ class Tray(QSystemTrayIcon):
         visible=self.overlay.isVisible(); self.overlay.unlocked=value; self.overlay.apply(); self.overlay.setVisible(visible)
     def clickthrough(self,value):
         self.config.click_through=value; self.commit(self.config)
+    def compact_view(self,value):
+        self.config.compact_mode=value; self.commit(self.config)
+        if self.dialog and self.dialog.isVisible():
+            self.dialog.fields['compact_mode'].setChecked(value)
     def startup(self,value):
         try: set_startup(value); self.config.start_with_windows=value; self.commit(self.config)
         except OSError:

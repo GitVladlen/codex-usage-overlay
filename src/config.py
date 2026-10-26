@@ -6,6 +6,7 @@ import re
 
 @dataclass
 class Config:
+    compact_mode: bool = True
     refresh_interval: int = 30
     x: int | None = None
     y: int | None = None
